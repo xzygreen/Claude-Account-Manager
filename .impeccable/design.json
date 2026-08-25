@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-20T02:52:58Z",
+  "title": "Design System: Claude Account Manager",
+  "extensions": {},
+  "components": [],
+  "narrative": {
+    "northStar": "原生操作台账",
+    "overview": "Claude Account Manager 是一个 Operate 模式的原生 macOS 工具：界面像一份清楚、可靠、可以快速扫读的本地台账。视觉表达服从账号定位、比较、筛选与编辑，依赖用户熟悉的 `NavigationSplitView`、`Table`、`Form`、sheet、toolbar 和原生 sidebar selection，不建立自定义网页式组件外观。\n\n系统保持高信息密度和低动效。注册时间在中间表格和右侧详情中都是一级信息；状态以文字、SF Symbol 和系统语义色共同表达；敏感字段默认隐藏，并以钥匙串保存状态而不是明文内容作为常态反馈。所有表面随 macOS 浅色、深色、高对比度与辅助功能设置自适应。",
+    "keyCharacteristics": [
+      "原生三栏操作结构，列表扫描优先于装饰表达。",
+      "San Francisco、SF Symbols、系统控件和动态语义色构成完整视觉语言。",
+      "teal 只承担交互 tint；状态与风险反馈保留各自的系统语义色。",
+      "日期与计数使用等宽数字，保证密集列和概览数字稳定对齐。",
+      "凭据默认不可见，涉及明文导出的风险必须在界面中显式呈现。"
+    ],
+    "rules": [
+      { "name": "语义适配", "body": "不把动态系统颜色冻结为自定义 RGB、hex 或浅色模式快照；新增界面继续使用 SwiftUI 语义角色。", "section": "colors" },
+      { "name": "状态三重编码", "body": "每个账号状态必须同时提供可读文字、SF Symbol 和颜色，颜色不能成为唯一信息载体。", "section": "colors" },
+      { "name": "单一交互强调", "body": "teal 用于交互 tint，不取代绿色、橙色、红色和蓝色的状态含义。", "section": "colors" },
+      { "name": "系统字号", "body": "不为常规界面发明固定字号；使用 SwiftUI 动态文字样式和系统字重，让 macOS 与辅助功能决定最终度量。", "section": "typography" },
+      { "name": "稳定数字", "body": "可纵向比较的日期和计数始终使用等宽数字，避免内容变化导致列内跳动。", "section": "typography" },
+      { "name": "注册时间一级信息", "body": "任何账号列表变体都必须在首屏表格中保留注册时间，并维持可排序、可筛选和可比较的阅读条件。", "section": "layout" },
+      { "name": "原生三栏", "body": "新增全局筛选放左栏，账号集合操作放中栏，单个账号查看与编辑放右栏；sheet 只承载添加、批量导入和导出等有明确开始与结束的任务。", "section": "layout" },
+      { "name": "原生层级", "body": "常驻内容不通过自绘阴影、玻璃模糊或漂浮大卡片制造层次；需要临时层级时使用系统 sheet、alert 或选择反馈。", "section": "elevation" },
+      { "name": "少量自定义形状", "body": "只有需要在密集内容中形成独立视觉单元的短标签使用胶囊；普通分区和字段继续依赖原生容器。", "section": "shapes" }
+    ],
+    "dos": [
+      "Do 保持原生 macOS `NavigationSplitView`、`Table`、`Form`、sheet、toolbar、sidebar selection 和系统反馈。",
+      "Do 把注册时间保留为表格一级列，并对日期与计数使用等宽数字。",
+      "Do 用 teal 作为交互 tint，用动态系统语义色表达状态、风险和破坏性操作。",
+      "Do 让所有状态同时具备文字、SF Symbol 和颜色，并提供可理解的辅助功能标签。",
+      "Do 默认隐藏 Keychain 敏感字段；查看态优先显示保存状态，明文导出必须显式确认风险。",
+      "Do 依赖系统控件、材质、选择和 sheet 完成浅深色与辅助功能适配。"
+    ],
+    "donts": [
+      "Don't 把界面改造成网页式仪表盘、营销大卡片、玻璃拟态或装饰性浮层。",
+      "Don't 用自定义字体、固定 hex 色或手工模拟的系统控件替换 San Francisco、动态语义色与原生组件。",
+      "Don't 只用颜色表达账号状态，或把注册时间隐藏到详情、tooltip 或展开面板。",
+      "Don't 默认显示自动登录链接、Session Key，或在无二次确认时导出明文凭据。",
+      "Don't 添加持续、弹跳或装饰性动效；保留系统 sheet、选择和状态过渡，并尊重 Reduce Motion。"
+    ]
+  }
+}
