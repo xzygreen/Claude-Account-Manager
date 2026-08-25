@@ -29,7 +29,7 @@ import Testing
     )
 
     let secretsMap: [UUID: AccountSecrets] = [
-        account1.id: AccountSecrets(loginLink: "https://claude.ai/login?token=abc", sessionKey: "sk-ant-test-key"),
+        account1.id: AccountSecrets(loginLink: "https://claude.ai/login?token=abc", sessionKey: "example-session-key"),
         account2.id: AccountSecrets(loginLink: "", sessionKey: "")
     ]
 
@@ -40,7 +40,7 @@ import Testing
     let date1Text = AppFormatters.dateTime.string(from: account1.registeredAt)
     let date2Text = AppFormatters.dateTime.string(from: account2.registeredAt)
 
-    let expectedLine1 = "user1@example.com|https://claude.ai/login?token=abc|sk-ant-test-key|\(date1Text)"
+    let expectedLine1 = "user1@example.com|https://claude.ai/login?token=abc|example-session-key|\(date1Text)"
     let expectedLine2 = "user2@example.com|||\(date2Text)"
 
     #expect(text == "\(expectedLine1)\n\(expectedLine2)\n")
@@ -51,7 +51,6 @@ import Testing
     #expect(parseResult.accounts.count == 2)
     #expect(parseResult.accounts[0].email == "user1@example.com")
     #expect(parseResult.accounts[0].loginLink == "https://claude.ai/login?token=abc")
-    #expect(parseResult.accounts[0].sessionKey == "sk-ant-test-key")
+    #expect(parseResult.accounts[0].sessionKey == "example-session-key")
     #expect(parseResult.accounts[1].email == "user2@example.com")
 }
-

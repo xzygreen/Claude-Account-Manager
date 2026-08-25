@@ -53,7 +53,7 @@ struct AccountEditorForm: View {
                     title: "Session Key",
                     text: $draft.sessionKey,
                     revealed: $revealSessionKey,
-                    prompt: "sk-ant-sid…"
+                    prompt: "example-session-key"
                 )
                 HStack(spacing: 4) {
                     Image(systemName: "lock.shield")
@@ -148,4 +148,3 @@ struct AccountEditorForm: View {
         }
     }
 }
-

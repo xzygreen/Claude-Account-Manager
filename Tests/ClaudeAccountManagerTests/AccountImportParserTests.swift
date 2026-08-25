@@ -3,14 +3,14 @@ import Testing
 @testable import ClaudeAccountManager
 
 @Test func parsesLegacyConcatenatedFormat() throws {
-    let input = "person@example.comhttps://claude.ai/login?token=abc--sk-ant-test--2026-08-01 09:30"
+    let input = "person@example.comhttps://claude.ai/login?token=abc--example-session-key--2026-08-01 09:30"
     let result = AccountImportParser.parse(input)
 
     #expect(result.errors.isEmpty)
     let account = try #require(result.accounts.first)
     #expect(account.email == "person@example.com")
     #expect(account.loginLink == "https://claude.ai/login?token=abc")
-    #expect(account.sessionKey == "sk-ant-test")
+    #expect(account.sessionKey == "example-session-key")
     #expect(AppFormatters.dateTime.string(from: account.registeredAt) == "2026-08-01 09:30")
 }
 

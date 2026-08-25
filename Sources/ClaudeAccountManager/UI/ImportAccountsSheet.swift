@@ -86,13 +86,13 @@ struct ImportAccountsSheet: View {
 
                 HStack(spacing: 6) {
                     Button("双横线格式") {
-                        appendTemplate("user@example.comhttps://claude.ai/login--sk-ant-sid01-xxxx--2026-08-20")
+                        appendTemplate("user@example.comhttps://claude.ai/login--example-session-key--2026-08-20")
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
 
                     Button("竖线管道格式") {
-                        appendTemplate("user@example.com | https://claude.ai/login | sk-ant-sid01-xxxx | 2026-08-20 12:00 | 正常 | 主力,工作 | 备注说明")
+                        appendTemplate("user@example.com | https://claude.ai/login | example-session-key | 2026-08-20 12:00 | 正常 | 主力,工作 | 备注说明")
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
@@ -103,7 +103,7 @@ struct ImportAccountsSheet: View {
                           {
                             "email": "user@example.com",
                             "login_link": "https://claude.ai/login",
-                            "session_key": "sk-ant-sid01-xxxx",
+                            "session_key": "example-session-key",
                             "registered_at": "2026-08-20",
                             "status": "normal",
                             "tags": ["主力"]
@@ -240,4 +240,3 @@ struct ImportAccountsSheet: View {
         }
     }
 }
-
