@@ -183,7 +183,7 @@ struct AccountDetailView: View {
                     .buttonStyle(.bordered)
                     .tint(.teal)
 
-                    if let url = URL(string: secrets.loginLink), url.scheme != nil {
+                    if LoginLink.isSafe(secrets.loginLink), let url = URL(string: secrets.loginLink) {
                         Button {
                             NSWorkspace.shared.open(url)
                         } label: {

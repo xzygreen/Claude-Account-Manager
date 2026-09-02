@@ -6,7 +6,7 @@ struct ParsedAccount: Sendable {
     var loginLink: String
     var sessionKey: String
     var registeredAt: Date
-    var status: AccountStatus
+    var status: AccountStatus?
     var lastUsed: Date?
     var tags: [String]
     var note: String
@@ -23,10 +23,11 @@ enum AccountImportParser {
         guard !trimmed.isEmpty else {
             return ImportParseResult(accounts: [], errors: ["没有可导入的内容。"])
         }
-        if trimmed.first == "[" || trimmed.first == "{" {
-            return parseJSON(trimmed)
+        let body = stripBOM(trimmed)
+        if body.first == "[" || body.first == "{" {
+            return parseJSON(body)
         }
-        return parseLines(trimmed)
+        return parseLines(body)
     }
 
     private static func parseLines(_ input: String) -> ImportParseResult {
@@ -82,7 +83,7 @@ enum AccountImportParser {
         }
 
         guard isEmail(email) else { throw ImportError.message("邮箱格式无效。") }
-        guard loginLink.isEmpty || URL(string: loginLink)?.scheme?.hasPrefix("http") == true else {
+        guard loginLink.isEmpty || LoginLink.isSafe(loginLink) else {
             throw ImportError.message("自动登录链接必须是 http/https 地址。")
         }
         guard let registeredAt = parseDate(dateText) else {
@@ -90,11 +91,19 @@ enum AccountImportParser {
         }
 
         let extraArray = Array(extras)
-        let status = extraArray.first.flatMap(AccountStatus.parse) ?? .normal
+        let status = extraArray.first.flatMap { $0.isEmpty ? nil : AccountStatus.parse($0) }
         let tags = extraArray.count > 1
-            ? extraArray[1].split(whereSeparator: { ",，;；".contains($0) }).map { clean(String($0)) }
+            ? extraArray[1].split(whereSeparator: { ",，;；".contains($0) }).map { clean(String($0)) }.filter { !$0.isEmpty }
             : []
-        let note = extraArray.count > 2 ? extraArray.dropFirst(2).joined(separator: " | ") : ""
+        let lastUsed: Date?
+        let note: String
+        if extraArray.count > 2, let date = parseDate(extraArray[2]) {
+            lastUsed = date
+            note = extraArray.count > 3 ? extraArray.dropFirst(3).joined(separator: " | ") : ""
+        } else {
+            lastUsed = nil
+            note = extraArray.count > 2 ? extraArray.dropFirst(2).joined(separator: " | ") : ""
+        }
 
         return ParsedAccount(
             line: number,
@@ -103,8 +112,8 @@ enum AccountImportParser {
             sessionKey: sessionKey,
             registeredAt: registeredAt,
             status: status,
-            lastUsed: nil,
-            tags: tags,
+            lastUsed: lastUsed,
+            tags: uniqueTags(tags),
             note: note
         )
     }
@@ -136,19 +145,23 @@ enum AccountImportParser {
                     let lastUsed = string(dictionary["last_used"]).flatMap(parseDate)
                     let tags: [String]
                     if let values = dictionary["tags"] as? [String] {
-                        tags = values.map(clean).filter { !$0.isEmpty }
+                        tags = uniqueTags(values.map(clean))
                     } else if let value = string(dictionary["tags"]) {
-                        tags = value.split(whereSeparator: { ",，;；".contains($0) }).map { clean(String($0)) }
+                        tags = uniqueTags(value.split(whereSeparator: { ",，;；".contains($0) }).map { clean(String($0)) })
                     } else {
                         tags = []
+                    }
+                    let loginLink = string(dictionary["login_link"]) ?? ""
+                    if !loginLink.isEmpty && !LoginLink.isSafe(loginLink) {
+                        throw ImportError.message("自动登录链接必须是 http/https 地址。")
                     }
                     accounts.append(ParsedAccount(
                         line: row,
                         email: email,
-                        loginLink: string(dictionary["login_link"]) ?? "",
+                        loginLink: loginLink,
                         sessionKey: string(dictionary["session_key"]) ?? "",
                         registeredAt: registeredAt,
-                        status: string(dictionary["status"]).flatMap(AccountStatus.parse) ?? .normal,
+                        status: string(dictionary["status"]).flatMap(AccountStatus.parse),
                         lastUsed: lastUsed,
                         tags: tags,
                         note: string(dictionary["note"]) ?? ""
@@ -208,6 +221,22 @@ enum AccountImportParser {
 
     private static func clean(_ value: String) -> String {
         value.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private static func stripBOM(_ value: String) -> String {
+        if value.hasPrefix("\u{FEFF}") {
+            return String(value.dropFirst())
+        }
+        return value
+    }
+
+    private static func uniqueTags(_ tags: [String]) -> [String] {
+        tags.reduce(into: [String]()) { result, value in
+            let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !trimmed.isEmpty,
+                  !result.contains(where: { $0.caseInsensitiveCompare(trimmed) == .orderedSame }) else { return }
+            result.append(trimmed)
+        }
     }
 
     private enum ImportError: LocalizedError {

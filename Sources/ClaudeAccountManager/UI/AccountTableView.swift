@@ -107,9 +107,8 @@ struct AccountTableView: View {
                     }
 
                     if let secrets = try? store.secrets(for: account.id),
-                       !secrets.loginLink.isEmpty,
-                       let url = URL(string: secrets.loginLink),
-                       url.scheme != nil {
+                       LoginLink.isSafe(secrets.loginLink),
+                       let url = URL(string: secrets.loginLink) {
                         Button {
                             NSWorkspace.shared.open(url)
                         } label: {
@@ -128,8 +127,7 @@ struct AccountTableView: View {
 
                     Button {
                         if let secrets = try? store.secrets(for: account.id), !secrets.loginLink.isEmpty {
-                            NSPasteboard.general.clearContents()
-                            NSPasteboard.general.setString(secrets.loginLink, forType: .string)
+                            SecretClipboard.copy(secrets.loginLink)
                         }
                     } label: {
                         Label("复制自动登录链接", systemImage: "link")
@@ -137,8 +135,7 @@ struct AccountTableView: View {
 
                     Button {
                         if let secrets = try? store.secrets(for: account.id), !secrets.sessionKey.isEmpty {
-                            NSPasteboard.general.clearContents()
-                            NSPasteboard.general.setString(secrets.sessionKey, forType: .string)
+                            SecretClipboard.copy(secrets.sessionKey)
                         }
                     } label: {
                         Label("复制 Session Key", systemImage: "key.fill")
@@ -147,7 +144,7 @@ struct AccountTableView: View {
                     Divider()
 
                     Button(role: .destructive) {
-                        store.deleteSelected()
+                        NotificationCenter.default.post(name: .confirmDeleteAccount, object: account.id)
                     } label: {
                         Label("删除账号", systemImage: "trash")
                     }

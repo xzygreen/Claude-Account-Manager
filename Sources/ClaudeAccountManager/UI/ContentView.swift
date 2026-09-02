@@ -6,6 +6,7 @@ struct ContentView: View {
     @State private var showImport = false
     @State private var showExport = false
     @State private var showDeleteConfirmation = false
+    @State private var pendingDeleteID: UUID?
 
     var body: some View {
         NavigationSplitView {
@@ -68,10 +69,23 @@ struct ContentView: View {
                 .environmentObject(store)
         }
         .alert("删除账号？", isPresented: $showDeleteConfirmation) {
-            Button("取消", role: .cancel) {}
-            Button("删除", role: .destructive) { store.deleteSelected() }
+            Button("取消", role: .cancel) { pendingDeleteID = nil }
+            Button("删除", role: .destructive) {
+                if let id = pendingDeleteID {
+                    store.delete(id: id)
+                } else {
+                    store.deleteSelected()
+                }
+                pendingDeleteID = nil
+            }
         } message: {
-            Text("将从本地数据库和钥匙串中删除 \(store.selectedAccount?.email ?? "该账号")。此操作无法撤销。")
+            let email = pendingDeleteID.flatMap { id in store.accounts.first { $0.id == id }?.email }
+                ?? store.selectedAccount?.email
+            Text("将从本地数据库和钥匙串中删除 \(email ?? "该账号")。此操作无法撤销。")
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .confirmDeleteAccount)) { notification in
+            pendingDeleteID = notification.object as? UUID ?? store.selectedID
+            showDeleteConfirmation = true
         }
         .alert("无法完成操作", isPresented: errorBinding) {
             Button("好", role: .cancel) { store.errorMessage = nil }

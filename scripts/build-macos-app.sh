@@ -31,6 +31,7 @@ export SDKROOT="${SDK_PATH}"
 export CLANG_MODULE_CACHE_PATH="${MODULE_CACHE_DIR}"
 export SWIFTPM_MODULECACHE_OVERRIDE="${MODULE_CACHE_DIR}"
 
+cd "${PROJECT_DIR}"
 swift build --disable-sandbox -c release "${ARCH_ARGS[@]}"
 BIN_DIR="$(swift build --disable-sandbox -c release "${ARCH_ARGS[@]}" --show-bin-path)"
 

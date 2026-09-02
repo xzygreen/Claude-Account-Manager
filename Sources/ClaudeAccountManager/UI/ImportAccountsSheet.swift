@@ -92,7 +92,7 @@ struct ImportAccountsSheet: View {
                     .controlSize(.small)
 
                     Button("竖线管道格式") {
-                        appendTemplate("user@example.com | https://claude.ai/login | example-session-key | 2026-08-20 12:00 | 正常 | 主力,工作 | 备注说明")
+                        appendTemplate("user@example.com | https://claude.ai/login | example-session-key | 2026-08-20 12:00 | 正常 | 主力,工作 | 2026-08-20 13:00 | 备注说明")
                     }
                     .buttonStyle(.bordered)
                     .controlSize(.small)
@@ -142,7 +142,7 @@ struct ImportAccountsSheet: View {
                                 .font(.body.weight(.medium))
                                 .lineLimit(1)
                             HStack(spacing: 6) {
-                                StatusBadge(status: account.status, compact: true)
+                                StatusBadge(status: account.status ?? .normal, compact: true)
                                 Text(AppFormatters.display(account.registeredAt))
                                     .font(.caption2)
                                     .foregroundStyle(.secondary)

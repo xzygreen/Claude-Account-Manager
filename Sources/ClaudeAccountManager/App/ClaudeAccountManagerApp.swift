@@ -94,11 +94,10 @@ struct MenuBarContentView: View {
                 if let secrets = try? store.secrets(for: current.id) {
                     if !secrets.loginLink.isEmpty {
                         Button("复制自动登录链接") {
-                            NSPasteboard.general.clearContents()
-                            NSPasteboard.general.setString(secrets.loginLink, forType: .string)
+                            SecretClipboard.copy(secrets.loginLink)
                         }
 
-                        if let url = URL(string: secrets.loginLink), url.scheme != nil {
+                        if LoginLink.isSafe(secrets.loginLink), let url = URL(string: secrets.loginLink) {
                             Button("在浏览器中打开登录") {
                                 NSWorkspace.shared.open(url)
                             }
@@ -107,8 +106,7 @@ struct MenuBarContentView: View {
 
                     if !secrets.sessionKey.isEmpty {
                         Button("复制 Session Key") {
-                            NSPasteboard.general.clearContents()
-                            NSPasteboard.general.setString(secrets.sessionKey, forType: .string)
+                            SecretClipboard.copy(secrets.sessionKey)
                         }
                     }
                 }
@@ -179,5 +177,6 @@ extension Notification.Name {
     static let addAccount = Notification.Name("ClaudeAccountManager.addAccount")
     static let importAccounts = Notification.Name("ClaudeAccountManager.importAccounts")
     static let exportAccounts = Notification.Name("ClaudeAccountManager.exportAccounts")
+    static let confirmDeleteAccount = Notification.Name("ClaudeAccountManager.confirmDeleteAccount")
 }
 

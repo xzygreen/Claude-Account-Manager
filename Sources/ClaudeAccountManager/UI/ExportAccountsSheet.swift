@@ -42,7 +42,7 @@ struct ExportAccountsSheet: View {
                             .font(.caption.weight(.medium))
                             .foregroundStyle(.secondary)
 
-                        Text("mail|邮箱自动登录链接|sessionkey|注册时间")
+                        Text("mail|登录链接|sessionkey|注册时间|状态|标签|最后使用|备注")
                             .font(.system(.body, design: .monospaced).weight(.semibold))
                             .foregroundStyle(.primary)
                             .padding(.horizontal, 10)
@@ -50,7 +50,7 @@ struct ExportAccountsSheet: View {
                             .background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: 6))
                             .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color(nsColor: .separatorColor), lineWidth: 1))
 
-                        Text("每行一个账号，按竖线 `|` 分隔，可直接用于批量管理、分发或再次批量导入。")
+                        Text("每行一个账号，按竖线 `|` 分隔。再导入时会保留状态、标签、备注和最后使用时间；空白敏感字段不会覆盖已有凭据。")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -121,16 +121,18 @@ struct ExportAccountsSheet: View {
     }
 
     private func loadPreview() {
-        if let text = try? store.exportText() {
-            previewText = text
+        do {
+            previewText = try store.exportText()
+        } catch {
+            previewText = ""
+            store.errorMessage = "无法生成导出预览：\(error.localizedDescription)"
         }
     }
 
     private func copyToClipboard() {
         do {
             let text = try store.exportText()
-            NSPasteboard.general.clearContents()
-            NSPasteboard.general.setString(text, forType: .string)
+            SecretClipboard.copy(text)
             copied = true
             DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
                 copied = false

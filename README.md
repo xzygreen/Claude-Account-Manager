@@ -9,8 +9,8 @@
 - 搜索邮箱、标签和备注。
 - 按状态、注册时间范围筛选；按注册时间正序/倒序、最后使用或邮箱排序。
 - 标记唯一“当前使用中”账号，并更新最后使用时间。
-- 支持以 `mail|邮箱自动登录链接|sessionkey|注册时间` 格式导出文本文件，便于分发与再导入。
-- Session Key 与自动登录链接保存到 macOS Keychain；SQLite 仅存元数据。
+- 支持以 `mail|登录链接|sessionkey|注册时间|状态|标签|最后使用|备注` 格式导出文本文件，便于分发与再导入。
+- Session Key 与自动登录链接保存在本机加密保险库中；SQLite 仅存元数据。
 
 ## 技术栈
 
@@ -38,7 +38,7 @@ SQLite 表 `accounts`：
 | `updated_at` | REAL | 最后修改时间 |
 | `is_current` | INTEGER | 唯一部分索引确保最多一个当前账号 |
 
-`login_link` 和 `session_key` 不进入 SQLite。它们按 `账号 UUID + 字段类型` 保存为 Keychain Generic Password 项，并设置为 `WhenUnlockedThisDeviceOnly`，不会通过 iCloud Keychain 同步。
+`login_link` 和 `session_key` 不进入 SQLite。它们存放在 Application Support 下的 AES-GCM 保险库中，主密钥保存在钥匙串，访问控制为 `WhenUnlockedThisDeviceOnly`。解密失败时应用会拒绝写入，以免覆盖现有凭据。
 
 ## 导入格式
 

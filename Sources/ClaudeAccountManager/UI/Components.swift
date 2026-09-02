@@ -226,7 +226,7 @@ struct CredentialCardView: View {
                     .buttonStyle(.bordered)
                     .tint(copied ? .green : .teal)
 
-                    if isLink, let url = URL(string: value), url.scheme != nil {
+                    if isLink, LoginLink.isSafe(value), let url = URL(string: value) {
                         Button {
                             NSWorkspace.shared.open(url)
                         } label: {
@@ -246,19 +246,20 @@ struct CredentialCardView: View {
     }
 
     private func maskedText(_ str: String) -> String {
-        if str.count <= 12 {
-            return String(repeating: "•", count: max(str.count, 8))
-        }
-        let prefix = str.prefix(6)
-        let suffix = str.suffix(4)
-        return "\(prefix)••••••••••••\(suffix)"
+        String(repeating: "•", count: min(max(str.count, 8), 24))
     }
 
     private func copyToClipboard(_ str: String) {
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(str, forType: .string)
+        SecretClipboard.copy(str)
         copied = true
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { copied = false }
+    }
+}
+
+enum SecretClipboard {
+    static func copy(_ str: String) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(str, forType: .string)
         DispatchQueue.main.asyncAfter(deadline: .now() + 60) {
             if NSPasteboard.general.string(forType: .string) == str {
                 NSPasteboard.general.clearContents()

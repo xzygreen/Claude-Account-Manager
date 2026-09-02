@@ -31,6 +31,13 @@ import Testing
     #expect(account.note == "需要复核")
 }
 
+@Test func pipeFormatWithLastUsedDoesNotTreatNoteAsDate() throws {
+    let input = "user@example.com | https://claude.ai/login | secret | 2026-07-02 | 受限 | 工作 | 2026-07-03 10:00 | 需要复核"
+    let account = try #require(AccountImportParser.parse(input).accounts.first)
+    #expect(account.lastUsed != nil)
+    #expect(account.note == "需要复核")
+}
+
 @Test func parsesJSON() throws {
     let input = #"[{"email":"json@example.com","login_link":"https://claude.ai","session_key":"secret","registered_at":"2026-06-10","status":"待验证","tags":["JSON","测试"]}]"#
     let result = AccountImportParser.parse(input)

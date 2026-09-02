@@ -1,6 +1,17 @@
 import Combine
 import Foundation
 
+private enum AccountStoreError: LocalizedError {
+    case rollbackFailed(operation: String, rollback: String)
+
+    var errorDescription: String? {
+        switch self {
+        case .rollbackFailed(let operation, let rollback):
+            return "操作失败（\(operation)），且凭据回滚也失败（\(rollback)）。请立即检查账号凭据。"
+        }
+    }
+}
+
 enum SidebarScope: Hashable {
     case all
     case current
@@ -158,7 +169,14 @@ final class AccountStore: ObservableObject {
                 try keychain.set(draft.sessionKey.trimmingCharacters(in: .whitespacesAndNewlines), accountID: id, kind: .sessionKey)
                 try database.save(account)
             } catch {
-                try? restore(previousSecrets, for: id)
+                do {
+                    try restore(previousSecrets, for: id)
+                } catch let restoreError {
+                    throw AccountStoreError.rollbackFailed(
+                        operation: error.localizedDescription,
+                        rollback: restoreError.localizedDescription
+                    )
+                }
                 throw error
             }
             reload(selecting: id)
@@ -170,7 +188,15 @@ final class AccountStore: ObservableObject {
     }
 
     func deleteSelected() {
-        guard let id = selectedID, let database else {
+        guard let id = selectedID else {
+            errorMessage = "请先选择要删除的账号。"
+            return
+        }
+        delete(id: id)
+    }
+
+    func delete(id: UUID) {
+        guard let database else {
             errorMessage = "本地数据库不可用，无法删除账号。"
             return
         }
@@ -180,10 +206,17 @@ final class AccountStore: ObservableObject {
                 try keychain.deleteAll(accountID: id)
                 try database.delete(id: id)
             } catch {
-                try? restore(previousSecrets, for: id)
+                do {
+                    try restore(previousSecrets, for: id)
+                } catch let restoreError {
+                    throw AccountStoreError.rollbackFailed(
+                        operation: error.localizedDescription,
+                        rollback: restoreError.localizedDescription
+                    )
+                }
                 throw error
             }
-            selectedID = nil
+            if selectedID == id { selectedID = nil }
             reload()
         } catch {
             errorMessage = error.localizedDescription
@@ -226,11 +259,13 @@ final class AccountStore: ObservableObject {
             if !item.loginLink.isEmpty { draft.loginLink = item.loginLink }
             if !item.sessionKey.isEmpty { draft.sessionKey = item.sessionKey }
             draft.registeredAt = item.registeredAt
-            draft.status = item.status
-            draft.hasLastUsed = item.lastUsed != nil
-            draft.lastUsed = item.lastUsed ?? Date()
-            draft.tagsText = item.tags.joined(separator: ", ")
-            draft.note = item.note
+            if let status = item.status { draft.status = status }
+            if item.lastUsed != nil {
+                draft.hasLastUsed = true
+                draft.lastUsed = item.lastUsed ?? Date()
+            }
+            if !item.tags.isEmpty { draft.tagsText = item.tags.joined(separator: ", ") }
+            if !item.note.isEmpty { draft.note = item.note }
             if save(draft) {
                 if existing == nil {
                     created += 1

@@ -44,6 +44,15 @@ enum AccountStatus: String, Codable, CaseIterable, Identifiable, Sendable {
     }
 }
 
+enum LoginLink {
+    static func isSafe(_ value: String) -> Bool {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, let url = URL(string: trimmed) else { return false }
+        let scheme = url.scheme?.lowercased()
+        return scheme == "http" || scheme == "https"
+    }
+}
+
 struct Account: Identifiable, Codable, Hashable, Sendable {
     var id: UUID
     var email: String

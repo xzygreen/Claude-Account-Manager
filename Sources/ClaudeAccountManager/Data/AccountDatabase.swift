@@ -50,7 +50,12 @@ final class AccountDatabase: @unchecked Sendable {
             let statement = try prepare(sql)
             defer { sqlite3_finalize(statement) }
             var accounts: [Account] = []
-            while sqlite3_step(statement) == SQLITE_ROW {
+            while true {
+                let code = sqlite3_step(statement)
+                if code == SQLITE_DONE { break }
+                guard code == SQLITE_ROW else {
+                    throw DatabaseError.execute(lastError())
+                }
                 guard
                     let idText = columnText(statement, 0),
                     let id = UUID(uuidString: idText),
@@ -59,10 +64,10 @@ final class AccountDatabase: @unchecked Sendable {
                     let status = AccountStatus(rawValue: statusText),
                     let tagsJSON = columnText(statement, 5),
                     let note = columnText(statement, 6)
-                else { throw DatabaseError.corruptRow }
+                else { continue }
 
                 let tagsData = Data(tagsJSON.utf8)
-                let tags = (try? JSONDecoder().decode([String].self, from: tagsData)) ?? []
+                let tags = uniqueTags((try? JSONDecoder().decode([String].self, from: tagsData)) ?? [])
                 let lastUsed: Date? = sqlite3_column_type(statement, 4) == SQLITE_NULL
                     ? nil
                     : Date(timeIntervalSince1970: sqlite3_column_double(statement, 4))
@@ -117,7 +122,7 @@ final class AccountDatabase: @unchecked Sendable {
                 } else {
                     sqlite3_bind_null(statement, 5)
                 }
-                let tagsData = try JSONEncoder().encode(account.tags)
+                let tagsData = try JSONEncoder().encode(uniqueTags(account.tags))
                 bind(String(decoding: tagsData, as: UTF8.self), to: statement, index: 6)
                 bind(account.note, to: statement, index: 7)
                 sqlite3_bind_double(statement, 8, account.createdAt.timeIntervalSince1970)
@@ -218,3 +223,12 @@ final class AccountDatabase: @unchecked Sendable {
 }
 
 private let SQLITE_TRANSIENT = unsafeBitCast(-1, to: sqlite3_destructor_type.self)
+
+private func uniqueTags(_ tags: [String]) -> [String] {
+    tags.reduce(into: [String]()) { result, value in
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty,
+              !result.contains(where: { $0.caseInsensitiveCompare(trimmed) == .orderedSame }) else { return }
+        result.append(trimmed)
+    }
+}
